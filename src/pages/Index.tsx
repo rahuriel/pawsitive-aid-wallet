@@ -1,17 +1,62 @@
 
+import { useState, useEffect } from "react";
 import NavBar from "@/components/NavBar";
 import HeroSection from "@/components/HeroSection";
 import DonationForm from "@/components/DonationForm";
 import ActivityFeed from "@/components/ActivityFeed";
 import StatCard from "@/components/StatCard";
-import { Calendar, Coins, Heart, User } from "lucide-react";
+import { 
+  Calendar, 
+  Coins, 
+  Heart, 
+  User, 
+  Loader2, 
+  Syringe, 
+  Scissors, 
+  Stethoscope, 
+  Bug, 
+  Droplets, 
+  ScanLine, 
+  Thermometer 
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { fetchDashboardStats, DashboardStats } from "@/services/dashboardService";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 const Index = () => {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const dashboardStats = await fetchDashboardStats();
+        setStats(dashboardStats);
+        console.log('Dashboard stats loaded:', dashboardStats); // Debug log
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadDashboardData();
+  }, []);
+  
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'TND',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -32,36 +77,125 @@ const Index = () => {
                 View All Activity
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard
-                title="Total Donations"
-                value="$32,450"
-                description="From 1,245 generous donors"
-                icon={<Heart />}
-                className="border-pawsitive-primary/20"
-              />
-              <StatCard
-                title="Animals Treated"
-                value="287"
-                description="Since our launch in January"
-                icon={<Calendar />}
-                className="border-pawsitive-primary/20"
-              />
-              <StatCard
-                title="Available Funds"
-                value="$8,392"
-                description="Ready for immediate care"
-                icon={<Coins />}
-                className="border-pawsitive-primary/20"
-              />
-              <StatCard
-                title="Community Members"
-                value="1,893"
-                description="Including 42 verified vets"
-                icon={<User />}
-                className="border-pawsitive-primary/20"
-              />
+            
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 text-pawsitive-primary animate-spin" />
+                <span className="ml-2 text-pawsitive-dark">Loading dashboard data...</span>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard
+                    title="Total Donations"
+                    value={formatCurrency(stats?.totalDonations || 0)}
+                    description={`From ${stats?.donorCount || 0} generous donors`}
+                    icon={<Heart />}
+                    className="border-pawsitive-primary/20"
+                  />
+                  <StatCard
+                    title="Animals Treated"
+                    value={stats?.animalsTreated.toString() || "0"}
+                    description="Successfully treated animals"
+                    icon={<Calendar />}
+                    className="border-pawsitive-primary/20"
+                  />
+                  <StatCard
+                    title="Available Funds"
+                    value={formatCurrency(stats?.availableFunds || 0)}
+                    description="Ready for immediate care"
+                    icon={<Coins />}
+                    className="border-pawsitive-primary/20"
+                  />
+                  <StatCard
+                    title="Community Members"
+                    value={stats?.communityMembers.toString() || "0"}
+                    description={`Including ${stats?.verifiedVets || 0} verified vets`}
+                    icon={<User />}
+                    className="border-pawsitive-primary/20"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        
+        {/* Your Impact This Month Section */}
+        <div className="py-12 bg-gradient-to-b from-pawsitive-accent/10 to-pawsitive-accent/20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-pawsitive-dark">Your Impact This Month</h2>
+              <p className="mt-2 text-lg text-gray-600">
+                See how your donations are helping animals in need by treatment category
+              </p>
             </div>
+            
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 text-pawsitive-primary animate-spin" />
+                <span className="ml-2 text-pawsitive-dark">Loading impact data...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {stats?.thisMonthTreatmentsByCategory.map((category) => {
+                  // Determine the appropriate icon based on category name
+                  let CategoryIcon = Stethoscope; // Default icon
+                  
+                  if (category.categoryName.includes('Vaccine')) {
+                    CategoryIcon = Syringe;
+                  } else if (category.categoryName.includes('Surgery')) {
+                    CategoryIcon = Scissors;
+                  } else if (category.categoryName.includes('Routine')) {
+                    CategoryIcon = Stethoscope;
+                  } else if (category.categoryName.includes('Deworming')) {
+                    CategoryIcon = Bug;
+                  } else if (category.categoryName.includes('Blood Transfusion')) {
+                    CategoryIcon = Droplets;
+                  } else if (category.categoryName.includes('Scanner')) {
+                    CategoryIcon = ScanLine;
+                  } else if (category.categoryName.includes('Blood Check')) {
+                    CategoryIcon = Thermometer;
+                  }
+                  
+                  return (
+                    <Card 
+                      key={category.categoryId} 
+                      className="overflow-hidden border-pawsitive-primary/20 hover:shadow-md transition-shadow duration-300 group"
+                    >
+                      <CardHeader className="pb-2 border-b border-pawsitive-accent/30">
+                        <div className="flex items-center space-x-2">
+                          <div className="p-2 rounded-full bg-pawsitive-accent/20 group-hover:bg-pawsitive-accent/40 transition-colors duration-300">
+                            <CategoryIcon className="h-5 w-5 text-pawsitive-primary" />
+                          </div>
+                          <CardTitle className="text-lg">{category.categoryName}</CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <Heart className="h-5 w-5 text-pawsitive-primary mr-2" />
+                              <span className="text-sm font-medium text-gray-600">Animals Helped</span>
+                            </div>
+                            <span className="text-2xl font-bold text-pawsitive-primary">{category.count}</span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between border-t pt-3 border-pawsitive-accent/20">
+                            <div className="flex items-center">
+                              <Coins className="h-5 w-5 text-amber-500 mr-2" />
+                              <span className="text-sm font-medium text-gray-600">Funds Used</span>
+                            </div>
+                            <span className="text-lg font-semibold text-pawsitive-dark">
+                              {formatCurrency(category.totalAmount)}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
         

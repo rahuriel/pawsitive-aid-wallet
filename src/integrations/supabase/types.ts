@@ -90,6 +90,51 @@ export type Database = {
         }
         Relationships: []
       }
+      treatment_categories: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      treatment_category_mappings: {
+        Row: {
+          id: string
+          treatment_id: string
+          category_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          treatment_id: string
+          category_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          treatment_id?: string
+          category_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
