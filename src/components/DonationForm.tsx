@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import AuthModal from "./AuthModal";
 import axios from "axios";
 import { PaymentRequest } from "@/services/paymentService";
+import { Switch } from "@/components/ui/switch";
 
 interface DonationOption {
   amount: number;
@@ -33,19 +34,37 @@ const DonationForm = () => {
   const [isDonating, setIsDonating] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
+  // Tip functionality
+  const [includeTip, setIncludeTip] = useState(false);
+  const [tipAmount, setTipAmount] = useState("");
+  const [tipPercentage, setTipPercentage] = useState<number>(10); // Default 10%
+  
   // We're removing the two-step process, so we don't need these states anymore
   // const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   // const [isPaymentReady, setIsPaymentReady] = useState(false);
 
+  // Calculate tip amount based on percentage of base donation amount
+  useEffect(() => {
+    if (includeTip && (selectedAmount || customAmount)) {
+      const baseAmount = selectedAmount || (customAmount ? parseFloat(customAmount) : 0);
+      const calculatedTip = (baseAmount * tipPercentage / 100).toFixed(2);
+      setTipAmount(calculatedTip);
+    }
+  }, [includeTip, selectedAmount, customAmount, tipPercentage]);
+
   const handleDonationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const finalAmount = selectedAmount || (customAmount ? parseFloat(customAmount) : 0);
+    const baseAmount = selectedAmount || (customAmount ? parseFloat(customAmount) : 0);
     
-    if (!finalAmount || finalAmount <= 0) {
+    if (!baseAmount || baseAmount <= 0) {
       toast.error("Please select or enter a valid donation amount");
       return;
     }
+    
+    // Calculate final amount including tip if enabled
+    const tipValue = includeTip ? (parseFloat(tipAmount) || 0) : 0;
+    const finalAmount = baseAmount + tipValue;
     
     setIsDonating(true);
     
@@ -81,10 +100,13 @@ const DonationForm = () => {
         // Store payment details in localStorage for verification after redirect
         localStorage.setItem('pawsitive_pending_donation', JSON.stringify({
           amount: finalAmount,
+          base_amount: baseAmount,
+          tip_amount: tipValue,
           message: message,
           payment_id: paymentId,
           timestamp: Date.now(),
-          is_anonymous: isAnonymous
+          is_anonymous: isAnonymous,
+          include_tip: includeTip
         }));
         
         console.log('Opening payment URL:', paymentUrl);
@@ -189,6 +211,64 @@ const DonationForm = () => {
                       className="pr-12"
                     />
                   </div>
+                </div>
+                
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="tip-toggle" className="font-medium">Add a tip to support website maintenance</Label>
+                    <Switch 
+                      id="tip-toggle" 
+                      checked={includeTip} 
+                      onCheckedChange={setIncludeTip} 
+                    />
+                  </div>
+                  
+                  {includeTip && (
+                    <div className="mt-3 p-4 bg-gray-50 rounded-md">
+                      <div className="mb-3">
+                        <Label className="mb-2 block text-sm">Select tip percentage</Label>
+                        <div className="flex gap-2">
+                          {[5, 10, 15, 20].map((percent) => (
+                            <Button
+                              key={percent}
+                              type="button"
+                              size="sm"
+                              variant={tipPercentage === percent ? "default" : "outline"}
+                              className={tipPercentage === percent ? "bg-pawsitive-primary" : ""}
+                              onClick={() => setTipPercentage(percent)}
+                            >
+                              {percent}%
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="mb-2">
+                        <Label htmlFor="custom-tip" className="mb-1 block text-sm">Or enter custom tip amount</Label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">TND</span>
+                          </div>
+                          <Input
+                            id="custom-tip"
+                            type="number"
+                            min="1"
+                            step="0.5"
+                            placeholder="Custom tip amount"
+                            value={tipAmount}
+                            onChange={(e) => setTipAmount(e.target.value)}
+                            className="pr-12"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600 mt-2">
+                        <p>Donation: {selectedAmount || (customAmount ? parseFloat(customAmount) : 0)} TND</p>
+                        <p>Tip: {parseFloat(tipAmount) || 0} TND</p>
+                        <p className="font-medium">Total: {(selectedAmount || (customAmount ? parseFloat(customAmount) : 0)) + (parseFloat(tipAmount) || 0)} TND</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="mb-6">
