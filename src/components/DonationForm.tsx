@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Heart } from "lucide-react";
+import { CheckCircle2, Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "./AuthModal";
+import axios from "axios";
+import { PaymentRequest } from "@/services/paymentService";
 
 interface DonationOption {
   amount: number;
@@ -31,6 +33,10 @@ const DonationForm = () => {
   const [isDonating, setIsDonating] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
+  // We're removing the two-step process, so we don't need these states anymore
+  // const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  // const [isPaymentReady, setIsPaymentReady] = useState(false);
+
   const handleDonationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -43,25 +49,81 @@ const DonationForm = () => {
     
     setIsDonating(true);
     
-    // Simulate donation processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success(
-      <div className="flex flex-col">
-        <div className="flex items-center">
-          <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
-          <span className="font-semibold">Thank you for your donation!</span>
+    try {
+      // Prepare payment data
+      const paymentData: PaymentRequest = {
+        amount: finalAmount,
+        note: message || 'Donation to PAWsitive Aid Wallet',
+        order_id: `donation_${Date.now()}`
+      };
+      
+      // Add user details if logged in and not anonymous
+      if (isLoggedIn && user && !isAnonymous) {
+        paymentData.first_name = user.name?.split(' ')[0] || '';
+        paymentData.last_name = user.name?.split(' ').slice(1).join(' ') || '';
+        paymentData.email = user.email || '';
+      }
+      
+      // Call our backend server directly to create the payment
+      const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+      const response = await axios.post(
+        `${serverUrl}/api/payment/create`,
+        paymentData
+      );
+      
+      console.log('Payment creation response:', response.data);
+      
+      // Process payment response and redirect directly to payment page
+      if (response.data && response.data.success && response.data.payment_url) {
+        const paymentUrl = response.data.payment_url;
+        const paymentId = response.data.payment_id;
+        
+        // Store payment details in localStorage for verification after redirect
+        localStorage.setItem('pawsitive_pending_donation', JSON.stringify({
+          amount: finalAmount,
+          message: message,
+          payment_id: paymentId,
+          timestamp: Date.now(),
+          is_anonymous: isAnonymous
+        }));
+        
+        console.log('Opening payment URL:', paymentUrl);
+        
+        // Store the payment URL in localStorage for debugging
+        localStorage.setItem('pawsitive_payment_url', paymentUrl);
+        
+        // Open the payment URL in a new tab
+        window.open(paymentUrl, '_blank');
+        
+        // Reset the form state
+        setIsDonating(false);
+        toast.success(
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <span className="font-semibold">Payment page opened</span>
+            </div>
+            <p className="text-sm mt-1">Complete your payment in the new tab.</p>
+          </div>
+        );
+      } else {
+        throw new Error('Invalid payment response');
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error.response?.data || error.message);
+      toast.error(
+        <div className="flex flex-col">
+          <div className="flex items-center">
+            <span className="font-semibold">Payment processing error</span>
+          </div>
+          <p className="text-sm mt-1">There was an error processing your donation. Please try again.</p>
         </div>
-        <p className="text-sm mt-1">Your donation of ${finalAmount.toFixed(2)} will help provide care for stray animals.</p>
-      </div>
-    );
-    
-    // Reset form
-    setSelectedAmount(null);
-    setCustomAmount("");
-    setMessage("");
-    setIsDonating(false);
+      );
+      setIsDonating(false);
+    }
   };
+  
+  // We don't need this function anymore as we're opening the payment page directly
+  // after creating the payment
 
   const handleAmountSelect = (amount: number) => {
     setSelectedAmount(amount);
@@ -103,7 +165,7 @@ const DonationForm = () => {
                         }`}
                         onClick={() => handleAmountSelect(option.amount)}
                       >
-                        <span className="text-lg font-bold">${option.amount}</span>
+                        <span className="text-lg font-bold">{option.amount} TND</span>
                         <span className="text-xs mt-1 text-center line-clamp-2">{option.description}</span>
                       </Button>
                     ))}
@@ -113,8 +175,8 @@ const DonationForm = () => {
                 <div className="mb-6">
                   <Label htmlFor="custom-amount" className="mb-2 block">Or enter a custom amount</Label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">$</span>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">TND</span>
                     </div>
                     <Input
                       id="custom-amount"
@@ -124,7 +186,7 @@ const DonationForm = () => {
                       placeholder="Enter amount"
                       value={customAmount}
                       onChange={handleCustomAmountChange}
-                      className="pl-7"
+                      className="pr-12"
                     />
                   </div>
                 </div>
@@ -163,7 +225,10 @@ const DonationForm = () => {
                     disabled={isDonating || (!selectedAmount && !customAmount)}
                   >
                     {isDonating ? (
-                      <>Processing...</>
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Processing Payment...
+                      </>
                     ) : (
                       <>
                         <Heart className="mr-2 h-5 w-5" />

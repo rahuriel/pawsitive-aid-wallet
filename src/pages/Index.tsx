@@ -124,9 +124,9 @@ const Index = () => {
         <div className="py-12 bg-gradient-to-b from-pawsitive-accent/10 to-pawsitive-accent/20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-pawsitive-dark">Your Impact This Month</h2>
+              <h2 className="text-3xl font-bold text-pawsitive-dark">Community Impact This Month</h2>
               <p className="mt-2 text-lg text-gray-600">
-                See how your donations are helping animals in need by treatment category
+                See how donations are helping animals in need by treatment category
               </p>
             </div>
             

@@ -114,22 +114,22 @@ export type Database = {
         }
         Relationships: []
       }
-      treatment_category_mappings: {
+      treatment_request_categories: {
         Row: {
           id: string
-          treatment_id: string
+          treatment_request_id: string
           category_id: string
           created_at: string
         }
         Insert: {
           id?: string
-          treatment_id: string
+          treatment_request_id: string
           category_id: string
           created_at?: string
         }
         Update: {
           id?: string
-          treatment_id?: string
+          treatment_request_id?: string
           category_id?: string
           created_at?: string
         }

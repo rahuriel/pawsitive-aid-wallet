@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Link Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    h1 {
+      color: #333;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    #payment-link {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Payment Link Test</h1>
+    <p>This page will help diagnose payment redirection issues.</p>
+    
+    <div id="payment-info">
+      <p>Loading payment information...</p>
+    </div>
+    
+    <div id="payment-link"></div>
+    
+    <div id="actions">
+      <a href="/" class="btn">Back to Home</a>
+    </div>
+  </div>
+
+  <script>
+    // Get payment info from localStorage
+    const pendingDonation = localStorage.getItem('pawsitive_pending_donation');
+    const paymentUrl = localStorage.getItem('pawsitive_payment_url');
+    const paymentInfo = document.getElementById('payment-info');
+    const paymentLinkDiv = document.getElementById('payment-link');
+    
+    if (pendingDonation) {
+      try {
+        const donationData = JSON.parse(pendingDonation);
+        
+        // Display payment info
+        paymentInfo.innerHTML = `
+          <h2>Pending Donation</h2>
+          <pre>${JSON.stringify(donationData, null, 2)}</pre>
+        `;
+      } catch (e) {
+        paymentInfo.innerHTML = `<p>Error parsing payment data: ${e.message}</p>`;
+      }
+    } else {
+      paymentInfo.innerHTML = `<p>No pending donation found in localStorage.</p>`;
+    }
+    
+    if (paymentUrl) {
+      paymentLinkDiv.innerHTML = `
+        <h2>Payment URL</h2>
+        <p>${paymentUrl}</p>
+        <p><a href="${paymentUrl}" target="_blank" class="btn">Open Payment Link</a></p>
+      `;
+    } else {
+      paymentLinkDiv.innerHTML = `<p>No payment URL found in localStorage.</p>`;
+    }
+  </script>
+</body>
+</html>

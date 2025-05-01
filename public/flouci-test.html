@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flouci Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    h1 {
+      color: #333;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 20px;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:hover {
+      background-color: #45a049;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Flouci Payment Test</h1>
+    
+    <div>
+      <h2>Test Flouci API</h2>
+      <p>Enter the payment URL from localStorage or server logs:</p>
+      <input type="text" id="payment-url" placeholder="https://flouci.com/pay/..." value="">
+      <button id="test-url" class="btn">Test URL</button>
+    </div>
+    
+    <div class="result" id="result">
+      <p>Results will appear here...</p>
+    </div>
+    
+    <div style="margin-top: 30px;">
+      <h2>Test Direct Links</h2>
+      <p>Click these direct links to test Flouci payment:</p>
+      <ul>
+        <li><a href="https://flouci.com/pay/PJ2DodvTS4GhkiovPLKgRQ" target="_blank">Test Link 1 (from server logs)</a></li>
+        <li><a href="https://flouci.com/pay/DDUOn-j-TIGfVV0eEGBj1w" target="_blank">Test Link 2 (from user test)</a></li>
+        <li><a href="https://developers.flouci.com/api/generate_payment" target="_blank">Flouci API Documentation</a></li>
+      </ul>
+    </div>
+    
+    <div style="margin-top: 30px;">
+      <h2>Create New Payment</h2>
+      <p>Test creating a new payment with our server:</p>
+      <button id="create-payment" class="btn">Create New Payment</button>
+    </div>
+    
+    <div class="result" id="create-result" style="display: none;">
+      <h3>New Payment Created</h3>
+      <pre id="payment-details"></pre>
+      <a id="new-payment-link" href="#" target="_blank" class="btn">Open Payment Page</a>
+    </div>
+  </div>
+
+  <script>
+    // Get payment URL from localStorage if available
+    const storedUrl = localStorage.getItem('pawsitive_payment_url');
+    if (storedUrl) {
+      document.getElementById('payment-url').value = storedUrl;
+    }
+    
+    // Test URL button
+    document.getElementById('test-url').addEventListener('click', function() {
+      const url = document.getElementById('payment-url').value.trim();
+      const resultDiv = document.getElementById('result');
+      
+      if (!url) {
+        resultDiv.innerHTML = '<p style="color: red;">Please enter a URL to test</p>';
+        return;
+      }
+      
+      resultDiv.innerHTML = `
+        <h3>Test Results</h3>
+        <p>URL: ${url}</p>
+        <p>Testing URL in new tab...</p>
+        <a href="${url}" target="_blank" class="btn">Open URL in New Tab</a>
+        <p style="margin-top: 10px;">If the above link doesn't work, try these alternatives:</p>
+        <button id="iframe-test" class="btn" style="background-color: #ff9800;">Test in iFrame</button>
+        <button id="redirect-test" class="btn" style="background-color: #f44336;">Redirect to URL</button>
+      `;
+      
+      // Add event listeners for the new buttons
+      document.getElementById('iframe-test').addEventListener('click', function() {
+        resultDiv.innerHTML += `<div style="margin-top: 15px;"><iframe src="${url}" style="width: 100%; height: 400px; border: 1px solid #ddd;"></iframe></div>`;
+      });
+      
+      document.getElementById('redirect-test').addEventListener('click', function() {
+        window.location.href = url;
+      });
+      
+      // Try to open the URL in a new tab
+      try {
+        window.open(url, '_blank');
+      } catch (e) {
+        resultDiv.innerHTML += `<p style="color: red; margin-top: 10px;">Error opening URL: ${e.message}</p>`;
+      }
+    });
+    
+    // Create new payment button
+    document.getElementById('create-payment').addEventListener('click', async function() {
+      const createResultDiv = document.getElementById('create-result');
+      const paymentDetailsDiv = document.getElementById('payment-details');
+      const newPaymentLink = document.getElementById('new-payment-link');
+      
+      createResultDiv.style.display = 'block';
+      paymentDetailsDiv.textContent = 'Creating payment...';
+      
+      try {
+        // Call our backend server to create a new payment
+        const response = await fetch('http://localhost:5000/api/payment/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: 10, // 10 TND
+            note: 'Test payment from flouci-test.html',
+            order_id: `test_${Date.now()}`
+          }),
+        });
+        
+        const data = await response.json();
+        paymentDetailsDiv.textContent = JSON.stringify(data, null, 2);
+        
+        if (data.success && data.payment_url) {
+          newPaymentLink.href = data.payment_url;
+          localStorage.setItem('pawsitive_payment_url', data.payment_url);
+        } else {
+          paymentDetailsDiv.textContent += '\n\nError: Payment creation failed';
+        }
+      } catch (error) {
+        paymentDetailsDiv.textContent = `Error creating payment: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>

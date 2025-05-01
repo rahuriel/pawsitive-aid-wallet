@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flouci Payment Simulator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0066cc;
+      margin-bottom: 10px;
+    }
+    .title {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+    }
+    .payment-details {
+      background-color: #f9f9f9;
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .detail-label {
+      color: #666;
+    }
+    .detail-value {
+      font-weight: bold;
+      color: #333;
+    }
+    .payment-methods {
+      margin-bottom: 30px;
+    }
+    .method-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .methods-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .method {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 15px;
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .method:hover {
+      border-color: #0066cc;
+      background-color: #f0f7ff;
+    }
+    .method.selected {
+      border-color: #0066cc;
+      background-color: #f0f7ff;
+    }
+    .method-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .method-name {
+      font-size: 14px;
+      color: #333;
+    }
+    .card-form {
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #555;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    .card-row {
+      display: flex;
+      gap: 15px;
+    }
+    .card-row .form-group {
+      flex: 1;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .btn:hover {
+      background-color: #0055aa;
+    }
+    .btn-secondary {
+      background-color: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .btn-secondary:hover {
+      background-color: #e5e5e5;
+    }
+    .actions {
+      display: flex;
+      gap: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Flouci Payment</div>
+      <div class="title">Complete Your Payment</div>
+      <div class="subtitle">Secure payment processing</div>
+    </div>
+    
+    <div class="payment-details">
+      <div class="detail-row">
+        <div class="detail-label">Merchant</div>
+        <div class="detail-value">PAWsitive Aid Wallet</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Amount</div>
+        <div class="detail-value" id="payment-amount">TND 0.00</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Transaction ID</div>
+        <div class="detail-value" id="payment-id">-</div>
+      </div>
+    </div>
+    
+    <div class="payment-methods">
+      <div class="method-title">Choose Payment Method</div>
+      <div class="methods-container">
+        <div class="method selected" data-method="card">
+          <div class="method-icon">💳</div>
+          <div class="method-name">Credit Card</div>
+        </div>
+        <div class="method" data-method="wallet">
+          <div class="method-icon">📱</div>
+          <div class="method-name">Flouci Wallet</div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="card-payment-form" class="card-form">
+      <div class="form-group">
+        <label for="card-number">Card Number</label>
+        <input type="text" id="card-number" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242">
+      </div>
+      
+      <div class="card-row">
+        <div class="form-group">
+          <label for="expiry">Expiry Date</label>
+          <input type="text" id="expiry" placeholder="MM/YY" value="12/25">
+        </div>
+        <div class="form-group">
+          <label for="cvv">CVV</label>
+          <input type="text" id="cvv" placeholder="123" value="123">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="card-name">Cardholder Name</label>
+        <input type="text" id="card-name" placeholder="John Doe" value="Test User">
+      </div>
+    </div>
+    
+    <div id="wallet-payment-form" class="card-form" style="display: none;">
+      <div class="form-group">
+        <label for="wallet-code">Enter 6-digit code from Flouci app</label>
+        <input type="text" id="wallet-code" placeholder="Enter code" value="111111">
+        <small style="display: block; margin-top: 5px; color: #666;">
+          Use code 111111 for successful payment, 000000 for failed payment
+        </small>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button id="cancel-btn" class="btn btn-secondary">Cancel</button>
+      <button id="pay-btn" class="btn">Pay Now</button>
+    </div>
+  </div>
+
+  <script>
+    // Parse URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentId = urlParams.get('payment_id') || 'test_payment';
+    const amount = parseFloat(urlParams.get('amount') || '0');
+    const redirectSuccess = urlParams.get('redirect_success') || '/payment/success';
+    const redirectFailure = urlParams.get('redirect_failure') || '/payment/failure';
+    
+    // Update payment details
+    document.getElementById('payment-amount').textContent = `TND ${amount.toFixed(2)}`;
+    document.getElementById('payment-id').textContent = paymentId;
+    
+    // Payment method selection
+    const methods = document.querySelectorAll('.method');
+    const cardForm = document.getElementById('card-payment-form');
+    const walletForm = document.getElementById('wallet-payment-form');
+    
+    methods.forEach(method => {
+      method.addEventListener('click', () => {
+        // Remove selected class from all methods
+        methods.forEach(m => m.classList.remove('selected'));
+        
+        // Add selected class to clicked method
+        method.classList.add('selected');
+        
+        // Show/hide appropriate form
+        const methodType = method.getAttribute('data-method');
+        if (methodType === 'card') {
+          cardForm.style.display = 'block';
+          walletForm.style.display = 'none';
+        } else {
+          cardForm.style.display = 'none';
+          walletForm.style.display = 'block';
+        }
+      });
+    });
+    
+    // Cancel button
+    document.getElementById('cancel-btn').addEventListener('click', () => {
+      window.location.href = redirectFailure;
+    });
+    
+    // Pay button
+    document.getElementById('pay-btn').addEventListener('click', () => {
+      // Get selected payment method
+      const selectedMethod = document.querySelector('.method.selected');
+      const methodType = selectedMethod.getAttribute('data-method');
+      
+      // Simulate payment processing
+      const processingDelay = 1500; // 1.5 seconds
+      
+      // Disable buttons during processing
+      const payBtn = document.getElementById('pay-btn');
+      const cancelBtn = document.getElementById('cancel-btn');
+      payBtn.disabled = true;
+      cancelBtn.disabled = true;
+      payBtn.textContent = 'Processing...';
+      
+      setTimeout(() => {
+        let isSuccess = false;
+        
+        if (methodType === 'card') {
+          // For card payments, check if the card number is the test success number
+          const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+          isSuccess = cardNumber === '4242424242424242';
+        } else {
+          // For wallet payments, check if the code is the test success code
+          const walletCode = document.getElementById('wallet-code').value;
+          isSuccess = walletCode === '111111';
+        }
+        
+        // Redirect based on payment result
+        if (isSuccess) {
+          window.location.href = redirectSuccess;
+        } else {
+          window.location.href = redirectFailure;
+        }
+      }, processingDelay);
+    });
+  </script>
+</body>
+</html>

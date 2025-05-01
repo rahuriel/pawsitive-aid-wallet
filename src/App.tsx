@@ -16,6 +16,8 @@ import Projects from "./pages/Projects";
 import Contact from "./pages/Contact";
 import ActivityList from "./pages/ActivityList";
 import TreatmentsList from "./pages/TreatmentsList";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailure from "./pages/PaymentFailure";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,8 @@ const App = () => (
             <Route path="/moderator" element={<ModeratorDashboard />} />
             <Route path="/activities" element={<ActivityList />} />
             <Route path="/treatments" element={<TreatmentsList />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failure" element={<PaymentFailure />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
